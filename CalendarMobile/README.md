@@ -9,7 +9,7 @@ along with the port that the flask server is listening on
 
 * Make sure the backend is running before the app is started
 
-# App Instruction
+# App Instructions
 
 * Swipe horizontally on the calendar to switch between months
 * Click the details cell for an event to edit.
