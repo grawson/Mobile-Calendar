@@ -18,21 +18,15 @@ class MainViewController: UIViewController {
         static let eventCell = "eventCell"
         static let yearFmt = "yyyy"
         static let monthFmt = "MMMM"
-        static let mappingFmt = "yyyy-MM-dd"
         static let cellFmt = "h:mm a"
         static let cellFullFmt = "h:mm a (MMM d)"
         static let loadingBatchSize = 3     // number of months to load in a batch (must be greater than 1)
     }
     
-    fileprivate var eventsMapping = [String: Int]()           // Maps date string to index of events in events array
-    fileprivate var events = [[Event]]()
+    fileprivate var eventsMapping = EventsMapping()          // data structure for table view
     fileprivate var months = [Date]()                        // months loaded into collection view (stored as first day of months)
     
-    fileprivate var selectedDate: Date?                      // date selected (circled in calendar)
-    
-    fileprivate var displayedEvents: Int?  { didSet { reloadTable() } }  // index for events displayed in the table view
-    fileprivate var editingIndex: Int?                       // index in events array of event currently editing
-    fileprivate var editingKey: String?                      // key for eventMapping leading to event array containning event currently editing
+    fileprivate var selectedDate: Date? { didSet { reloadTable() } }    // date selected (circled in calendar)
     
     fileprivate var todayIndex = Const.loadingBatchSize      // index for today in the months array
     fileprivate var initialScroll = false                    // flag true if have scrolled to this month on load
@@ -61,6 +55,13 @@ class MainViewController: UIViewController {
             yearLabel.set(title: formatter.string(from: date), forStyle: LabelStyle.lightTitle)
         }
     }
+    
+    fileprivate lazy var todayButton: UIButton = {
+        let x = UIButton()
+        x.addTarget(self, action: #selector(todayClicked(_:)), for: .touchUpInside)
+        x.set(title: "Today", states: [.normal], forStyle: LabelStyle.button)
+        return x
+    }()
     
     fileprivate var separator: UIView = {
         let x = UIView()
@@ -168,18 +169,6 @@ class MainViewController: UIViewController {
     // MARK:  Func
     // ********************************************************************************************
     
-    // Add an event to the even mapping data structure
-    fileprivate func updateEventMapping(event: Event) {
-        formatter.dateFormat = Const.mappingFmt
-        let key = formatter.string(from: event.startDate)
-        
-        if eventsMapping[key] == nil {
-            events.append([Event]())
-            eventsMapping[key] = events.count-1
-        }
-        events[eventsMapping[key]!].append(event)
-    }
-    
     // Initialize the initial months in the collection view
     fileprivate func initMonths() {
         let offset = Const.loadingBatchSize
@@ -195,7 +184,7 @@ class MainViewController: UIViewController {
         EventsManager.shared.getEvents(start: start, end: end) { [weak self] (events) in
             guard let sSelf = self else { return }
             
-            events.forEach { sSelf.updateEventMapping(event: $0) }
+            events.forEach { sSelf.eventsMapping.add($0) }
             
             DispatchQueue.main.async {
                 sSelf.monthCollectionView.reloadData()
@@ -220,6 +209,7 @@ class MainViewController: UIViewController {
         view.addSubview(addEventButton)
         view.addSubview(dayLabels)
         view.addSubview(separator)
+        view.addSubview(todayButton)
     }
     
     fileprivate func updateLayout() {
@@ -229,7 +219,7 @@ class MainViewController: UIViewController {
         let views = [
             monthCollectionView, monthLabel, yearLabel,     // 0-2
             eventsTableView, addEventButton, dayLabels,     // 3-5
-            separator   // 6-8
+            separator, todayButton   // 6-8
         ]
         
         let metrics = [Layout.margin, 20, Layout.margin*2]
@@ -240,7 +230,7 @@ class MainViewController: UIViewController {
             "H:|[v3]|",
             "H:|-(m2)-[v5]-(m2)-|",
             "H:|-(m2)-[v6]-(m2)-|",
-            "H:[v4(m1)]-(m2)-|",
+            "H:[v7]-[v4(m1)]-(m2)-|",
             "V:[v4(m1)]"
         ]
         
@@ -254,7 +244,8 @@ class MainViewController: UIViewController {
             emptyTableLabel.centerXAnchor.constraint(equalTo: eventsTableView.centerXAnchor),
             emptyTableLabel.centerYAnchor.constraint(equalTo: eventsTableView.centerYAnchor),
             yearLabel.trailingAnchor.constraint(lessThanOrEqualTo: addEventButton.leadingAnchor, constant: Layout.margin),
-            addEventButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor)
+            addEventButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor),
+            todayButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor)
         ]
         
         view.addConstraints(constraints)
@@ -269,13 +260,8 @@ class MainViewController: UIViewController {
     }
     
     fileprivate func reloadTable() {
-        emptyTableLabel.isHidden = displayedEvents != nil
-        
-        // only sort displayed events for efficiency sake
-        if let index = displayedEvents {
-            events[index].sort { $0.startDate < $1.startDate }
-        }
-        
+        emptyTableLabel.isHidden = eventsMapping.countEventsFor(selectedDate) > 0
+        eventsMapping.sortEventsFor(selectedDate)   // only sort displayed events for efficiency sake
         eventsTableView.reloadData()
     }
     
@@ -294,9 +280,12 @@ class MainViewController: UIViewController {
     @objc fileprivate func addEventClicked(_ sender: UIButton) {
         showEventDetails(nil)
     }
-
+    
+    @objc fileprivate func todayClicked(_ sender: UIButton) {
+        monthCollectionView.scrollToItem(at: IndexPath(row: todayIndex, section: 0), at: .centeredHorizontally, animated: true)
+        displayedDate = months[todayIndex]
+    }
 }
-
 
 
 // MARK: Collection view data source
@@ -314,7 +303,7 @@ extension MainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Const.cellID, for: indexPath) as! MonthCollectionViewCell
-        cell.eventsMapping = eventsMapping
+        cell.eventsMapping = eventsMapping  
         cell.date = months[indexPath.row]
         cell.update()
         cell.delegate = self
@@ -365,7 +354,7 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
                 let referenceDate = updateBeginning ? months.first! : months.last!
                 let toAdd = Calendar.current.date(byAdding: DateComponents(month: updateBeginning ? -1 : 1, day: 0), to: referenceDate)!.startOfMonth()
                 updateBeginning ? months.insert(toAdd, at: 0) : months.append(toAdd)
-                todayIndex += updateBeginning ? 1 : -1
+                if updateBeginning { todayIndex += 1 }
             }
             
             // Load events for new months
@@ -385,7 +374,7 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
         // clear today selection if vc is visible
         guard self.isViewLoaded && (self.view.window != nil) else { return }
         (cell as! MonthCollectionViewCell).clearToday()
-        displayedEvents = nil
+        selectedDate = nil
     }
 }
 
@@ -394,20 +383,18 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
 
 extension MainViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let index = displayedEvents else { return 0 }
-        return events[index].count
+        return eventsMapping.countEventsFor(selectedDate)
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: Const.eventCell, for: indexPath as IndexPath) as! EventTableViewCell
-        guard let index = displayedEvents else { return cell }
-        
         // selection color
+        
         let selection = UIView()
         selection.backgroundColor = Colors.blue4
         cell.selectedBackgroundView = selection
-
-        let event = events[index][indexPath.row]
+        
+        guard let event = eventsMapping.eventFor(selectedDate, atRow: indexPath.row) else { return cell }
         cell.title = event.title
         
         formatter.dateFormat = Const.cellFmt
@@ -433,14 +420,7 @@ extension MainViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let index = displayedEvents else { return }
-        let event = events[index][indexPath.row]
-        
-        // store vars for later to quixkly update data structure on removal or edit
-        editingIndex = indexPath.row
-        formatter.dateFormat = Const.mappingFmt
-        editingKey = formatter.string(from: event.startDate)
-        
+        guard let event = eventsMapping.eventFor(selectedDate, atRow: indexPath.row) else { return }
         showEventDetails(event)
     }
 }
@@ -450,24 +430,8 @@ extension MainViewController: UITableViewDelegate {
 // ********************************************************************************************
 
 extension MainViewController: MonthCollectionViewCellDelegate {
-    func didSelectDay(day: Int, month: Int) {
-        guard let displayedDate = displayedDate else { return }
-        
-        var components = DateComponents()
-        let referenceComponents = Calendar.current.dateComponents([.year, .month], from: displayedDate)
-        
-        // update components based on reference month
-        components.day = day
-        components.year = referenceComponents.year!
-        components.month = referenceComponents.month! + month
-        
-        // Compute the key to lookup to required data
-        selectedDate = Calendar.current.date(from: components)
-        formatter.dateFormat = Const.mappingFmt
-        let key = formatter.string(from: selectedDate!)
-        
-        // Set table view data. Will be nil if it doesnt exist in the mapping
-        displayedEvents = eventsMapping[key]
+    func didSelect(date: Date) {
+       selectedDate = date
     }
 }
 
@@ -477,31 +441,24 @@ extension MainViewController: MonthCollectionViewCellDelegate {
 extension MainViewController: EventFormDelegate {
    
     func didEdit(_ event: Event) {
-        removeFromEventMapping(event)
-        updateEventMapping(event: event)
+        eventsMapping.remove(event)   // TODO: Will not work! just removing then adding back
+        eventsMapping.add(event)
         
         monthCollectionView.reloadData()
         reloadTable()
     }
     
     func didCreate(_ event: Event) {
-        updateEventMapping(event: event)
+        eventsMapping.add(event)
         reloadIndexPathsFor(event)
     }
     
     func didDelete(_ event: Event) {
-        removeFromEventMapping(event)
+        eventsMapping.remove(event)
         reloadIndexPathsFor(event)
     }
     
-    // remove an event from the mapping
-    fileprivate func removeFromEventMapping(_ event: Event) {
-        events[displayedEvents!].remove(at: editingIndex!)  // remove event
-        if events[displayedEvents!].count == 0 {            // remove mapping to event
-            eventsMapping[editingKey!] = nil
-        }
-    }
-    
+
     // reload the month and adjacent months for a specified event
     fileprivate func reloadIndexPathsFor(_ event: Event) {
         

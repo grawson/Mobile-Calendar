@@ -9,14 +9,7 @@
 import UIKit
 
 protocol MonthCollectionViewCellDelegate {
-    
-    
-    /// Called when a day has been selected.
-    ///
-    /// - Parameters:
-    ///   - day: The day number
-    ///   - month: 0 if in currently displayed month, -1 if previous, 1 if next
-    func didSelectDay(day: Int, month: Int)
+    func didSelect(date: Date)
 }
 
 class MonthCollectionViewCell: UICollectionViewCell {
@@ -26,7 +19,7 @@ class MonthCollectionViewCell: UICollectionViewCell {
     
     var date: Date?                                     // Can be any day in the month
     var delegate: MonthCollectionViewCellDelegate?
-    var eventsMapping: [String: Int]?                   // Maps date string to index of events in events array
+    var eventsMapping: EventsMapping?
     
     fileprivate var c = [NSLayoutConstraint]()
     fileprivate var weekContainingToday: WeekView?      // week containing selected day
@@ -94,16 +87,13 @@ class MonthCollectionViewCell: UICollectionViewCell {
         guard
             let startCurr = date?.startOfMonth(),
             let endCurr = date?.endOfMonth(),
-            let endPrev = Calendar.current.date(byAdding: DateComponents(month: -1, day: 0), to: startCurr)?.endOfMonth(),
-            let next = Calendar.current.date(byAdding: DateComponents(month: 1, day: 0), to: startCurr)
+            let endPrev = Calendar.current.date(byAdding: DateComponents(month: -1, day: 0), to: startCurr)?.endOfMonth()
             else { return }
         
         // Weekday numbers
         let firstWeekdayCurr = Calendar.current.dateComponents([.weekday], from: startCurr).weekday!
         let lastWeekdayCurr = Calendar.current.dateComponents([.weekday], from: endCurr).weekday!
         let endPrevComponents = Calendar.current.dateComponents([.day, .year, .month], from: endPrev)
-        let nextComponents = Calendar.current.dateComponents([.year, .month], from: next)
-        let currComponents = Calendar.current.dateComponents([.year, .month], from: endCurr)
         
         var currDay = 1
         for r in 0..<weeksStack.arrangedSubviews.count {
@@ -142,18 +132,18 @@ class MonthCollectionViewCell: UICollectionViewCell {
             weekView.currentMonth = currentMonth
             
             // Update event markers on each day
-            if let mapping = eventsMapping {
+            if let mapping = eventsMapping, let date = date {
                 var eventOnDays = Array(repeating: false, count: 7)
                 for i in 0..<7 {
-                    var key = ""
+                    var currDateComp = Calendar.current.dateComponents([.year, .month], from: date)
+                    currDateComp.day = days[i]
+                    
                     if r == 0 && !currentMonth[i] { // prev month
-                        key = String(format: "%d-%02d-%02d", endPrevComponents.year!, endPrevComponents.month!, days[i])
+                        currDateComp.month! -= 1
                     } else if r == weeksStack.arrangedSubviews.count-1 && !currentMonth[i] {    // next month
-                        key = String(format: "%d-%02d-%02d", nextComponents.year!, nextComponents.month!, days[i])
-                    } else {    // this month
-                        key = String(format: "%d-%02d-%02d", currComponents.year!, currComponents.month!, days[i])
+                        currDateComp.month! += 1
                     }
-                    eventOnDays[i] = mapping[key] != nil
+                    eventOnDays[i] = mapping.countEventsFor(Calendar.current.date(from: currDateComp)!) > 0
                 }
                 weekView.eventOnDay = eventOnDays
             }
@@ -178,12 +168,13 @@ extension MonthCollectionViewCell: WeekViewDelegate {
         weekContainingToday = weekView
         weekView.today = index
         
-        var month = 0
+        var dateComp = Calendar.current.dateComponents([.year, .month, .day], from: self.date!)
+        dateComp.day! = weekView.days![index]
         if weekView.tag == 0 && !(weekView.currentMonth?[index] ?? true) {  // prev month
-            month = -1
+            dateComp.month! -= 1
         } else if weekView.tag == weeksStack.arrangedSubviews.count-1 && !(weekView.currentMonth?[index] ?? true) {    // next month
-            month = 1
+            dateComp.month! += 1
         }
-        delegate?.didSelectDay(day: weekView.days?[index] ?? -1, month: month)
+        delegate?.didSelect(date: Calendar.current.date(from: dateComp)!)
     }
 }

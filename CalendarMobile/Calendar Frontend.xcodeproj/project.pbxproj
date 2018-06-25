@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3576FF80A2B682ACDB124EC9 /* Pods_Calendar_Frontend.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7E10F0BE33E86CFA1FC3C551 /* Pods_Calendar_Frontend.framework */; };
+		513C00C820E092B00096586B /* EventsMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 513C00C720E092B00096586B /* EventsMapping.swift */; };
 		515BEA4E20DBA9B20093028A /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 515BEA4D20DBA9B20093028A /* Config.swift */; };
 		5165313B20D8745500E304A5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5165313A20D8745500E304A5 /* AppDelegate.swift */; };
 		5165313D20D8745500E304A5 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5165313C20D8745500E304A5 /* MainViewController.swift */; };
@@ -27,6 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		513C00C720E092B00096586B /* EventsMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsMapping.swift; sourceTree = "<group>"; };
 		515BEA4D20DBA9B20093028A /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		5165313720D8745500E304A5 /* Calendar Frontend.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Calendar Frontend.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5165313A20D8745500E304A5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 			children = (
 				5165315A20D9E85E00E304A5 /* Event.swift */,
 				5165315C20D9E88200E304A5 /* EventsManager.swift */,
+				513C00C720E092B00096586B /* EventsMapping.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -294,6 +297,7 @@
 				51EE69BC20DAF6D7006E71E1 /* FieldTableViewCell.swift in Sources */,
 				5165313B20D8745500E304A5 /* AppDelegate.swift in Sources */,
 				51EE69BA20DAEDBC006E71E1 /* EventDetailsViewController.swift in Sources */,
+				513C00C820E092B00096586B /* EventsMapping.swift in Sources */,
 				5165315B20D9E85E00E304A5 /* Event.swift in Sources */,
 				5165315D20D9E88200E304A5 /* EventsManager.swift in Sources */,
 				5165315020D8800C00E304A5 /* Style.swift in Sources */,
