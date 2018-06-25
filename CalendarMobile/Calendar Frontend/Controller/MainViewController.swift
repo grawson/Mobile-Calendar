@@ -440,12 +440,11 @@ extension MainViewController: MonthCollectionViewCellDelegate {
 
 extension MainViewController: EventFormDelegate {
    
-    func didEdit(_ event: Event) {
-        eventsMapping.remove(event)   // TODO: Will not work! just removing then adding back
-        eventsMapping.add(event)
-        
-        monthCollectionView.reloadData()
-        reloadTable()
+    func didEdit(_ oldEvent: Event, newEvent: Event) {
+        eventsMapping.remove(oldEvent)
+        eventsMapping.add(newEvent)
+        reloadIndexPathsFor(oldEvent)
+        reloadIndexPathsFor(newEvent)
     }
     
     func didCreate(_ event: Event) {

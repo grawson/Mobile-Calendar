@@ -9,7 +9,7 @@
 import Foundation
 import SwiftyJSON
 
-class Event {
+class Event: NSCopying {
     
     fileprivate struct Const {
         static let readFmt = "yyyy-MM-dd HH:mm:ss"
@@ -45,6 +45,12 @@ class Event {
         if let endDate = json["end_date"].string {
             self.endDate = formatter.date(from: endDate)
         }
+    }
+    
+    func copy(with zone: NSZone? = nil) -> Any {
+        let copy = Event(title: title ?? "", start: startDate, end: endDate)
+        copy.id = id
+        return copy
     }
 
 }

@@ -9,7 +9,7 @@
 import UIKit
 
 protocol EventFormDelegate {    
-    func didEdit(_ event: Event)
+    func didEdit(_ oldEvent: Event, newEvent: Event)
     func didCreate(_ event: Event)
     func didDelete(_ event: Event)
 }
@@ -160,6 +160,8 @@ class EventDetailsViewController: UIViewController {
         
         // update event if editing
         if let editEvent = editEvent {
+            let oldEvent = editEvent.copy() as! Event
+            
             editEvent.title = title
             editEvent.endDate = end
             editEvent.startDate = start
@@ -172,7 +174,7 @@ class EventDetailsViewController: UIViewController {
                 
                 DispatchQueue.main.async {
                     self?.saveButton.isEnabled = true
-                    self?.delegate?.didEdit(editEvent)
+                    self?.delegate?.didEdit(oldEvent, newEvent: editEvent)
                     self?.close()
                 }
             }
