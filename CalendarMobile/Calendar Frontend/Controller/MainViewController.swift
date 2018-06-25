@@ -177,19 +177,12 @@ class MainViewController: UIViewController {
             let startOfMonth = Calendar.current.date(byAdding: DateComponents(month: i, day: 0), to: Date())!.startOfMonth()
             months.append(startOfMonth)
         }
-        loadEvents(start: months.first!, end: months.last!.endOfMonth())
-    }
-    
-    // load events based on given dates
-    fileprivate func loadEvents(start: Date, end: Date) {
-        EventsManager.shared.getEvents(start: start, end: end) { [weak self] (events) in
-            guard let sSelf = self else { return }
-            
-            events.forEach { sSelf.eventsMapping.add($0) }
-            
+        
+        // load events
+        eventsMapping.loadEvents(start: months.first!, end: months.last!) { [weak self] in
             DispatchQueue.main.async {
-                sSelf.monthCollectionView.reloadData()
-                sSelf.reloadTable()
+                self?.monthCollectionView.reloadData()
+                self?.reloadTable()
             }
         }
     }
@@ -260,12 +253,14 @@ class MainViewController: UIViewController {
         return Int(round(proportionalOffset))
     }
     
+    // reload the events table view
     fileprivate func reloadTable() {
         emptyTableLabel.isHidden = eventsMapping.countEventsFor(selectedDate) > 0
         eventsMapping.sortEventsFor(selectedDate)   // only sort displayed events for efficiency sake
         eventsTableView.reloadData()
     }
     
+    // show event details form
     fileprivate func showEventDetails(_ forEvent: Event?) {
         let vc = EventDetailsViewController()
         vc.delegate = self
@@ -361,12 +356,13 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
             // Load events for new months
             let firstMonth = months[updateBeginning ? 0 : months.count-1]
             let lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1) - (Const.loadingBatchSize-1)].endOfMonth()
-            loadEvents(start: firstMonth, end: lastMonth)
-            
-            // Reload and scroll to correct position
-            monthCollectionView.reloadData()    // TODO: Innefficient to reload all cells
-            if updateBeginning {
-                monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
+            eventsMapping.loadEvents(start: firstMonth, end: lastMonth) {
+                DispatchQueue.main.async { [weak self] in
+                    self?.monthCollectionView.reloadData()    // TODO: Innefficient to reload all cells
+                    if updateBeginning {
+                        self?.monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
+                    }
+                }
             }
         }
     }
@@ -457,7 +453,6 @@ extension MainViewController: EventFormDelegate {
         eventsMapping.remove(event)
         reloadIndexPathsFor(event)
     }
-    
 
     // reload the month and adjacent months for a specified event
     fileprivate func reloadIndexPathsFor(_ event: Event) {

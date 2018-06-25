@@ -26,6 +26,7 @@ struct Colors {
     static let blue2 = UIColor(red: 29/255, green: 39/255, blue: 47/255, alpha: 1)
     static let blue3 = UIColor(red: 29/255, green: 36/255, blue: 44/255, alpha: 1)
     static let blue4 = UIColor(red: 36/255, green: 45/255, blue: 56/255, alpha: 1)
+    
     static let translucentNav = UIColor(red: 9/255, green: 19/255, blue: 27/255, alpha: 1)
 }
 

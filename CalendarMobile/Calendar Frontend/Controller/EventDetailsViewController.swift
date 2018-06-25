@@ -162,6 +162,7 @@ class EventDetailsViewController: UIViewController {
         if let editEvent = editEvent {
             let oldEvent = editEvent.copy() as! Event
             
+            // update new event
             editEvent.title = title
             editEvent.endDate = end
             editEvent.startDate = start
