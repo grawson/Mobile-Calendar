@@ -29,7 +29,7 @@ extension UIView {
         
         var constraints = [NSLayoutConstraint]()
         withFormats.forEach {
-            constraints += NSLayoutConstraint.constraints(withVisualFormat: $0, options: NSLayoutConstraint.FormatOptions(), metrics: metricsDict, views: viewsDict)
+            constraints += NSLayoutConstraint.constraints(withVisualFormat: $0, options: NSLayoutFormatOptions(), metrics: metricsDict, views: viewsDict)
         }
         return constraints
     }
@@ -38,7 +38,7 @@ extension UIView {
 extension UILabel {
     
     // set a label text with specified attributes
-    func set(title: String?, forStyle attr: [NSAttributedString.Key: Any]) {
+    func set(title: String?, forStyle attr: [NSAttributedStringKey: Any]) {
         guard let title = title else { return }
         attributedText = NSAttributedString(string: title, attributes: attr)
     }
@@ -64,7 +64,7 @@ extension Comparable {
 
 extension UIButton {
     
-    func set(title: String, states: [UIControl.State], forStyle attr: [NSAttributedString.Key: Any]) {
+    func set(title: String, states: [UIControlState], forStyle attr: [NSAttributedStringKey: Any]) {
         for state in states {
             let attributedTitle = NSAttributedString(string: title, attributes: attr)
             setAttributedTitle(attributedTitle, for: state)

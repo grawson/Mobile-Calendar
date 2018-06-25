@@ -1,6 +1,6 @@
 # Notes
 
-* Compiled with Xcode 10.0 Beta on iOS 12 Beta
+* Compiled with Xcode 9.4.1 on iOS 11.4
 
 # Setup
 

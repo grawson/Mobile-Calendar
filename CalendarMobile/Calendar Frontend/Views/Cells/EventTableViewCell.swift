@@ -33,7 +33,7 @@ class EventTableViewCell: UITableViewCell {
     // MARK:  Init
     // ********************************************************************************************
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         initViews()
         updateLayout()
@@ -75,7 +75,7 @@ class EventTableViewCell: UITableViewCell {
         c = createConstraints(withFormats: formats, metrics: metrics, views: views)
         
         c += [
-            endLabel.trailingAnchor.constraint(lessThanOrEqualToSystemSpacingAfter: trailingAnchor, multiplier: -Layout.margin),
+            endLabel.trailingAnchor.constraintLessThanOrEqualToSystemSpacingAfter(trailingAnchor, multiplier: -Layout.margin),
             separator.centerYAnchor.constraint(equalTo: startLabel.centerYAnchor)
         ]
         addConstraints(c)

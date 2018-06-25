@@ -33,43 +33,43 @@ struct Colors {
 
 struct LabelStyle {
     
-    static let strongTitle: [NSAttributedString.Key: Any] = [
+    static let strongTitle: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.titleText,
         .font: UIFont.systemFont(ofSize: 28, weight: .heavy)]
     
-    static let lightTitle: [NSAttributedString.Key: Any] = [
+    static let lightTitle: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.titleText,
         .font: UIFont.systemFont(ofSize: 28, weight: .light)]
     
-    static let regular: [NSAttributedString.Key: Any] = [
+    static let regular: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.titleText,
         .font: UIFont.systemFont(ofSize: 15, weight: .regular)]
     
-    static let header: [NSAttributedString.Key: Any] = [
+    static let header: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.titleText,
         .font: UIFont.systemFont(ofSize: 15, weight: .semibold)]
     
-    static let subtitle: [NSAttributedString.Key: Any] = [
+    static let subtitle: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.subtitleText,
         .font: UIFont.systemFont(ofSize: 15, weight: .regular)]
     
-    static let darkRegular: [NSAttributedString.Key: Any] = [
+    static let darkRegular: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.blue1,
         .font: UIFont.systemFont(ofSize: 15, weight: .regular)]
     
-    static let fadedRegular: [NSAttributedString.Key: Any] = [
+    static let fadedRegular: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.faded,
         .font: UIFont.systemFont(ofSize: 15, weight: .regular)]
     
-    static let fadedHeader: [NSAttributedString.Key: Any] = [
+    static let fadedHeader: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.faded,
         .font: UIFont.systemFont(ofSize: 20, weight: .regular)]
     
-    static let button: [NSAttributedString.Key: Any] = [
+    static let button: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.tint,
         .font: UIFont.systemFont(ofSize: 15, weight: .regular)]
     
-    static let largeButton: [NSAttributedString.Key: Any] = [
+    static let largeButton: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.tint,
         .font: UIFont.systemFont(ofSize: 17, weight: .regular)]
 }

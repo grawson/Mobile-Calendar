@@ -98,7 +98,7 @@ class MainViewController: UIViewController {
         x.backgroundColor = Colors.blue3
         x.separatorColor = Colors.separator
         x.register(EventTableViewCell.self, forCellReuseIdentifier: Const.eventCell)
-        x.estimatedRowHeight = UITableView.automaticDimension
+        x.estimatedRowHeight = UITableViewAutomaticDimension
         x.tableFooterView = UIView()
         
         // shadow
@@ -413,7 +413,7 @@ extension MainViewController: UITableViewDataSource {
 extension MainViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
+        return UITableViewAutomaticDimension
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

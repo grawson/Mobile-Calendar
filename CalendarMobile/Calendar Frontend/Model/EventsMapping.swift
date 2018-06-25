@@ -63,6 +63,7 @@ class EventsMapping {
         events[dateIndex].sort { $0.startDate < $1.startDate }
     }
     
+    // Returns the number of events on a specified date
     public func countEventsFor(_ date: Date?) -> Int {
         guard let date = date else { return 0 }
         let key = keyFor(date)
@@ -70,6 +71,7 @@ class EventsMapping {
         return events[dateIndex].count
     }
     
+    // Get an event for a given date and index
     public func eventFor(_ date: Date?, atRow r: Int) -> Event? {
         guard let date = date else { return nil }
         let key = keyFor(date)
