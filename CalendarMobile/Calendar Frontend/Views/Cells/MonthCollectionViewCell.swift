@@ -70,30 +70,31 @@ class MonthCollectionViewCell: UICollectionViewCell {
         c = []
         
         let views = [ weeksStack ]
-        let metrics = [ Layout.margin ]
         let formats = [
-            "H:|-(m0)-[v0]-(m0)-|",
-            "V:|[v0]|"
+            "H:|-[v0]-|",
+            "V:|-[v0]-|"
         ]
         
-        c = createConstraints(withFormats: formats, metrics: metrics, views: views)
+        c = createConstraints(withFormats: formats, metrics: nil, views: views)
         addConstraints(c)
     }
     
     // Update the month view
     public func update() {
-
-        // calculate start/end points for current month
-        guard
-            let startCurr = date?.startOfMonth(),
-            let endCurr = date?.endOfMonth(),
-            let endPrev = Calendar.current.date(byAdding: DateComponents(month: -1, day: 0), to: startCurr)?.endOfMonth()
-            else { return }
+        guard let date = date else { return }
         
-        // Weekday numbers
+        let startCurr = date.startOfMonth()
+        let endCurr = date.endOfMonth()
+        guard let endPrev = Calendar.current.date(byAdding: DateComponents(month: -1, day: 0), to: startCurr)?.endOfMonth() else { return }
+
         let firstWeekdayCurr = Calendar.current.dateComponents([.weekday], from: startCurr).weekday!
         let lastWeekdayCurr = Calendar.current.dateComponents([.weekday], from: endCurr).weekday!
         let endPrevComponents = Calendar.current.dateComponents([.day, .year, .month], from: endPrev)
+        
+        // Check if today is in this month
+        let currComp = Calendar.current.dateComponents([.year, .month], from: date)
+        let todayComp = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        let todayDay = todayComp.year! == currComp.year! && todayComp.month! == currComp.month! ? todayComp.day! : nil
         
         var currDay = 1
         for r in 0..<weeksStack.arrangedSubviews.count {
@@ -132,9 +133,17 @@ class MonthCollectionViewCell: UICollectionViewCell {
             weekView.currentMonth = currentMonth
             
             // Update event markers on each day
-            if let mapping = eventsMapping, let date = date {
+            var foundToday = false
+            if let mapping = eventsMapping {
                 var eventOnDays = Array(repeating: false, count: 7)
                 for i in 0..<7 {
+                    
+                    // check for and highlight today
+                    if let todayDay = todayDay, todayDay == weekView.days![i] {
+                        weekView.todayIndex = i
+                        foundToday = true
+                    }
+                    
                     var currDateComp = Calendar.current.dateComponents([.year, .month], from: date)
                     currDateComp.day = days[i]
                     
@@ -146,6 +155,11 @@ class MonthCollectionViewCell: UICollectionViewCell {
                     eventOnDays[i] = mapping.countEventsFor(Calendar.current.date(from: currDateComp)!) > 0
                 }
                 weekView.eventOnDay = eventOnDays
+            }
+            
+            // clear today highlighting if not found
+            if !foundToday {
+                weekView.todayIndex = nil
             }
         }
     }

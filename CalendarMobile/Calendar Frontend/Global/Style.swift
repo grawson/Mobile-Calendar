@@ -67,4 +67,8 @@ struct LabelStyle {
     static let button: [NSAttributedString.Key: Any] = [
         .foregroundColor: Colors.tint,
         .font: UIFont.systemFont(ofSize: 15, weight: .regular)]
+    
+    static let largeButton: [NSAttributedString.Key: Any] = [
+        .foregroundColor: Colors.tint,
+        .font: UIFont.systemFont(ofSize: 17, weight: .regular)]
 }

@@ -28,6 +28,7 @@ class WeekView: UIView {
     var currentMonth: [Bool]?   { didSet { updateDays() } }                         // Flags indicating the day is in the current month
     var days: [Int]?            { didSet { updateDays() } }                         // Day numbers for the week
     var eventOnDay: [Bool]?     { didSet { updateEventOnDays() } }                  // Marker if there is an event in a day
+    var todayIndex: Int?        { didSet { updateDays() } }                         // index of today in the days array
     
     fileprivate var c = [NSLayoutConstraint]()
     fileprivate var eventMarkers = [UIView]()
@@ -130,7 +131,15 @@ class WeekView: UIView {
         
         for i in 0...daysStack.arrangedSubviews.count-1 {
             let button = daysStack.arrangedSubviews[i] as! UIButton
-            button.set(title: "\(days[i])", states: [.normal, .highlighted], forStyle: currentMonth[i] ? LabelStyle.regular : LabelStyle.fadedRegular)
+            
+            var attr = LabelStyle.regular
+            if todayIndex == i {
+                attr = LabelStyle.button
+            } else if !currentMonth[i] {
+                attr = LabelStyle.fadedRegular
+            }
+            
+            button.set(title: "\(days[i])", states: [.normal, .highlighted], forStyle: attr)
             button.set(title: "\(days[i])", states: [.selected], forStyle: LabelStyle.darkRegular)
             if (today == i) { button.isSelected = true }
         }

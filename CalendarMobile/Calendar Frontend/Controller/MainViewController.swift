@@ -59,7 +59,7 @@ class MainViewController: UIViewController {
     fileprivate lazy var todayButton: UIButton = {
         let x = UIButton()
         x.addTarget(self, action: #selector(todayClicked(_:)), for: .touchUpInside)
-        x.set(title: "Today", states: [.normal], forStyle: LabelStyle.button)
+        x.set(title: "Today", states: [.normal], forStyle: LabelStyle.largeButton)
         return x
     }()
     
@@ -86,9 +86,10 @@ class MainViewController: UIViewController {
         let days = ["S", "M", "T", "W", "T", "F", "S"]
         for day in days {
             let label = UILabel()
-            label.set(title: day, forStyle: LabelStyle.button)
+            label.set(title: day, forStyle: LabelStyle.fadedRegular)
             x.addArrangedSubview(label)
         }
+
         return x
     }()
     
@@ -110,7 +111,7 @@ class MainViewController: UIViewController {
     
     fileprivate var emptyTableLabel: UILabel = {
         let x = UILabel()
-        x.set(title: "No Events.", forStyle: LabelStyle.fadedHeader)
+        x.set(title: "No Events", forStyle: LabelStyle.fadedHeader)
         return x
     }()
     
@@ -222,15 +223,15 @@ class MainViewController: UIViewController {
             separator, todayButton   // 6-8
         ]
         
-        let metrics = [Layout.margin, 20, Layout.margin*2]
+        let metrics = [Layout.margin, 20, Layout.margin*2, Layout.margin*1.5]
         let formats = [
             "H:|[v0]|",
             "H:|-(m0)-[v1]-[v2]",
             "V:|-(40)-[v1]-(m0)-[v5]-(m0)-[v6(0.5)]-[v0(275)]-[v3]|",
             "H:|[v3]|",
-            "H:|-(m2)-[v5]-(m2)-|",
-            "H:|-(m2)-[v6]-(m2)-|",
-            "H:[v7]-[v4(m1)]-(m2)-|",
+            "H:|-(m3)-[v5]-(m3)-|",
+            "H:|-[v6]-|",
+            "H:[v7]-(m0)-[v4(m1)]-|",
             "V:[v4(m1)]"
         ]
         
