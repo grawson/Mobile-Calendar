@@ -8,8 +8,10 @@
 
 import UIKit
 
-protocol EventFormDelegate {
-    func didCompleteForm(event: Event?, wasEdited: Bool)
+protocol EventFormDelegate {    
+    func didEdit(_ event: Event)
+    func didCreate(_ event: Event)
+    func didDelete(_ event: Event)
 }
 
 class EventDetailsViewController: UIViewController {
@@ -23,12 +25,17 @@ class EventDetailsViewController: UIViewController {
         static let cellHeight: CGFloat = 50
     }
     
+    fileprivate enum FormMode: String {
+        case edit, add, delete
+    }
+    
     var delegate: EventFormDelegate?
     var selectedDate: Date? { didSet { tableView.reloadData() } }  // the selected date in the calendar
     
-    var event: Event? {     // the event to edit
+    var editEvent: Event? {     // the event to edit
         didSet {
-            deleteButton.isHidden = event == nil
+            deleteButton.isHidden = editEvent == nil
+            navigationItem.title = "Edit Event"
             tableView.reloadData()
         }
     }
@@ -61,7 +68,7 @@ class EventDetailsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.title = event == nil ? "New Event" : "Edit Event"
+        navigationItem.title = "New Event"
         view.backgroundColor = UIColor.white
         initViews()
         updateLayout()
@@ -151,46 +158,54 @@ class EventDetailsViewController: UIViewController {
             return
         }
         
-        // update vent if editing
-        if event != nil {
-            event?.title = title
-            event?.endDate = end
-            event?.startDate = start
-        }
-        
-        let newEvent = event == nil ? Event(title: title, start: start, end: end) : event!
-        
-        if self.event == nil {  // save
-            EventsManager.shared.saveEvent(newEvent) { [weak self] (success) in
-                self?.finish(success: success, event: newEvent)
+        // update event if editing
+        if let editEvent = editEvent {
+            editEvent.title = title
+            editEvent.endDate = end
+            editEvent.startDate = start
+            
+            EventsManager.shared.updateEvent(editEvent) { [weak self] (success) in
+                guard success else {
+                    self?.presentFailure(mode: .edit)
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self?.saveButton.isEnabled = true
+                    self?.delegate?.didEdit(editEvent)
+                    self?.close()
+                }
             }
-        } else { // update
-            EventsManager.shared.updateEvent(newEvent) { [weak self] (success) in
-                self?.finish(success: success, event: newEvent)
+            
+        // create new event
+        } else {
+            let newEvent = Event(title: title, start: start, end: end)
+            
+            EventsManager.shared.saveEvent(newEvent) { [weak self] (success) in
+                guard success else {
+                    self?.presentFailure(mode: .add)
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self?.saveButton.isEnabled = true
+                    self?.delegate?.didCreate(newEvent)
+                    self?.close()
+                }
             }
         }
     }
     
-    // finish saving or updating an event
-    fileprivate func finish(success: Bool, event: Event?) {
-        defer {
-            saveButton.isEnabled = true
-        }
+    // Present a failure alert on database transaction error
+    fileprivate func presentFailure(mode: FormMode) {
+        let alert = UIAlertController(title: "Uh Oh", message: "Failed to \(mode) event.", preferredStyle: .alert)
+        let ok = UIAlertAction(title: "OK", style: .default, handler: nil)
+        alert.addAction(ok)
         
-        // present alert on error
-        guard success else {
-            let alert = UIAlertController(title: "Uh Oh", message: "Failed to save event to database.", preferredStyle: .alert)
-            let ok = UIAlertAction(title: "OK", style: .default, handler: nil)
-            alert.addAction(ok)
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.present(alert, animated: true, completion: nil)
-            }
-            return
+        DispatchQueue.main.async { [weak self] in
+            self?.saveButton.isEnabled = true
+            self?.present(alert, animated: true, completion: nil)
         }
-        
-        delegate?.didCompleteForm(event: event, wasEdited: self.event != nil)
-        close()
     }
     
     
@@ -211,8 +226,17 @@ class EventDetailsViewController: UIViewController {
         
         let yes = UIAlertAction(title: "Yes", style: .destructive) { [weak self] (action) in
             guard let sSelf = self else { return }
-            EventsManager.shared.deleteEvent(sSelf.event!) { (success) in
-                sSelf.finish(success: success, event: nil)
+           
+            EventsManager.shared.deleteEvent(sSelf.editEvent!) { (success) in
+                guard success else {
+                    self?.presentFailure(mode: .delete)
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self?.delegate?.didDelete(sSelf.editEvent!)
+                    self?.close()
+                }
             }
         }
         
@@ -244,18 +268,22 @@ extension EventDetailsViewController: UITableViewDataSource {
         
         if indexPath.section == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: Const.fieldCellID, for: indexPath as IndexPath) as! FieldTableViewCell
-            cell.title = event?.title
+            cell.title = editEvent?.title
             return cell
             
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: Const.pickerCell, for: indexPath as IndexPath) as! DatePickerTableViewCell
             cell.directions = indexPath.row == 0 ? "Start" : "End"
             
-            if let event = event {  // editing
-                cell.selectedDate = indexPath.row == 0 ? event.startDate : event.endDate
+            if let editEvent = editEvent {  // editing
+                cell.selectedDate = indexPath.row == 0 ? editEvent.startDate : editEvent.endDate
             
-            } else if selectedDate != nil {   // adding new event
-                cell.selectedDate = selectedDate
+            } else if let selectedDate = selectedDate {   // adding new event
+                if indexPath.row == 1 {
+                    cell.selectedDate = Calendar.current.date(byAdding: .hour, value: 1, to: selectedDate)  // Add an hour for the end date
+                } else {
+                    cell.selectedDate = selectedDate
+                }
             }
             
             return cell

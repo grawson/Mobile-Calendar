@@ -51,13 +51,16 @@ class EventsManager {
         
         let url = "http://\(Config.domain)/events"
         Alamofire.request(url, method: .post, parameters: parameters).responseJSON { response in
-            if let json = response.result.value {
-                let swiftyJSON = JSON(json)
-                let success = swiftyJSON["code"].int ?? -1 == 200
-                
-                event.id = Int(swiftyJSON["data"].stringValue) ?? -1  // Update id for event
-                completion(success)
+            guard let json = response.result.value else {
+                completion(false)
+                return
             }
+            
+            let swiftyJSON = JSON(json)
+            let success = swiftyJSON["code"].int ?? -1 == 200
+            
+            event.id = Int(swiftyJSON["data"].stringValue) ?? -1  // Update id for event
+            completion(success)
         }
     }
     
@@ -70,12 +73,15 @@ class EventsManager {
         ]
         
         let url = "http://\(Config.domain)/events"
-        Alamofire.request(url, method: .put, parameters: parameters).responseJSON { response in     
-            if let json = response.result.value {
-                let swiftyJSON = JSON(json)
-                let success = swiftyJSON["code"].int ?? -1 == 200
-                completion(success)
+        Alamofire.request(url, method: .put, parameters: parameters).responseJSON { response in
+            guard let json = response.result.value else {
+                completion(false)
+                return
             }
+            
+            let swiftyJSON = JSON(json)
+            let success = swiftyJSON["code"].int ?? -1 == 200
+            completion(success)
         }
     }
     
@@ -86,11 +92,14 @@ class EventsManager {
         
         let url = "http://\(Config.domain)/events"
         Alamofire.request(url, method: .delete, parameters: parameters).responseJSON { response in
-            if let json = response.result.value {
-                let swiftyJSON = JSON(json)
-                let success = swiftyJSON["code"].int ?? -1 == 200
-                completion(success)
+            guard let json = response.result.value else {
+                completion(false)
+                return
             }
+            
+            let swiftyJSON = JSON(json)
+            let success = swiftyJSON["code"].int ?? -1 == 200
+            completion(success)
         }
     }
     
@@ -99,13 +108,17 @@ class EventsManager {
         
         Alamofire.request("http://\(Config.domain)/events", parameters: params).responseJSON { response in
             var events = [Event]()
-            if let json = response.result.value {
-                let swiftyJSON = JSON(json)
-                
-                for eventJSON in swiftyJSON.arrayValue {
-                    let event = Event(json: eventJSON)
-                    events.append(event)
-                }
+            
+            guard let json = response.result.value else {
+                completion(events)
+                return
+            }
+            
+            let swiftyJSON = JSON(json)
+            
+            for eventJSON in swiftyJSON.arrayValue {
+                let event = Event(json: eventJSON)
+                events.append(event)
             }
             completion(events)
         }

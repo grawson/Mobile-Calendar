@@ -282,7 +282,7 @@ class MainViewController: UIViewController {
     fileprivate func showEventDetails(_ forEvent: Event?) {
         let vc = EventDetailsViewController()
         vc.delegate = self
-        vc.event = forEvent
+        vc.editEvent = forEvent
         vc.selectedDate = selectedDate
         let nav = UINavigationController(rootViewController: vc)
         present(nav, animated: true, completion: nil)
@@ -475,45 +475,47 @@ extension MainViewController: MonthCollectionViewCellDelegate {
 // ********************************************************************************************
 
 extension MainViewController: EventFormDelegate {
+   
+    func didEdit(_ event: Event) {
+        removeFromEventMapping(event)
+        updateEventMapping(event: event)
+        
+        monthCollectionView.reloadData()
+        reloadTable()
+    }
     
-    func didCompleteForm(event: Event?, wasEdited: Bool) {
-        
-        // remove if edited in case the start date has changed
-        if wasEdited {
-            events[displayedEvents!].remove(at: editingIndex!)  // remove event
-            
-            if events[displayedEvents!].count == 0 {    // remove mapping to event
-                eventsMapping[editingKey!] = nil
-            }
+    func didCreate(_ event: Event) {
+        updateEventMapping(event: event)
+        reloadIndexPathsFor(event)
+    }
+    
+    func didDelete(_ event: Event) {
+        removeFromEventMapping(event)
+        reloadIndexPathsFor(event)
+    }
+    
+    // remove an event from the mapping
+    fileprivate func removeFromEventMapping(_ event: Event) {
+        events[displayedEvents!].remove(at: editingIndex!)  // remove event
+        if events[displayedEvents!].count == 0 {            // remove mapping to event
+            eventsMapping[editingKey!] = nil
         }
+    }
+    
+    // reload the month and adjacent months for a specified event
+    fileprivate func reloadIndexPathsFor(_ event: Event) {
         
-        if let event = event {
-            updateEventMapping(event: event)
-        }
+        // difference in months between today and event
+        let monthDiff = Calendar.current.dateComponents([.month], from: Date(), to: event.endDate).month!
+        let monthIndex = todayIndex + monthDiff
         
-        // Reload only months containing event
+        // calculate indices of months
         var toReload = [IndexPath]()
-        let components = Calendar.current.dateComponents([.month, .year], from: selectedDate!)
-        for i in 0..<months.count {
-            let toCompare = Calendar.current.dateComponents([.month, .year], from: months[i])
-            if toCompare.month! == components.month! && toCompare.year! == components.year! {
-                
-                // Reload same month
-                toReload.append(IndexPath(row: i, section: 0))
-                
-                // Reload previous month
-                if i > 0 {
-                    toReload.append(IndexPath(row: i-1, section: 0))
-                }
-                
-                // Reload next month
-                if i < months.count-1 {
-                    toReload.append(IndexPath(row: i+1, section: 0))
-                }
-            }
-        }
+        toReload.append(IndexPath(row: monthIndex, section: 0))                                          // month for event
+        if monthIndex-1 >= 0 {              toReload.append(IndexPath(row: monthIndex-1, section: 0)) }  // month earlier
+        if monthIndex+1 < months.count {    toReload.append(IndexPath(row: monthIndex+1, section: 0)) }  // month later
         
-        // Reload
+        // reload
         monthCollectionView.reloadItems(at: toReload)
         reloadTable()
     }
