@@ -35,7 +35,7 @@ class EventDetailsViewController: UIViewController {
     var editEvent: Event? {     // the event to edit
         didSet {
             deleteButton.isHidden = editEvent == nil
-            navigationItem.title = "Edit Event"
+            title = "Edit Event"
             tableView.reloadData()
         }
     }
@@ -46,7 +46,7 @@ class EventDetailsViewController: UIViewController {
     
     lazy fileprivate var deleteButton: UIButton = {
         let x = UIButton()
-        x.set(title: "Delete", states: [.normal], forStyle: LabelStyle.button)
+        x.set(title: "Delete", states: [.normal], forStyle: LabelStyle.destructiveButton)
         x.contentEdgeInsets = UIEdgeInsets(top: 100, left: 0, bottom: 0, right: 0)
         x.addTarget(self, action: #selector(deleteTapped(_:)), for: .touchUpInside)
         return x
@@ -68,7 +68,7 @@ class EventDetailsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.title = "New Event"
+        title = editEvent == nil ? "New Event" : "Edit Event"
         view.backgroundColor = UIColor.white
         initViews()
         updateLayout()
@@ -244,8 +244,8 @@ class EventDetailsViewController: UIViewController {
         }
         
         let cancel = UIAlertAction(title: "Cancel", style: .default, handler: nil)
-        alert.addAction(yes)
         alert.addAction(cancel)
+        alert.addAction(yes)
         present(alert, animated: true, completion: nil)
     }
 }

@@ -72,4 +72,8 @@ struct LabelStyle {
     static let largeButton: [NSAttributedStringKey: Any] = [
         .foregroundColor: Colors.tint,
         .font: UIFont.systemFont(ofSize: 17, weight: .regular)]
+    
+    static let destructiveButton: [NSAttributedStringKey: Any] = [
+        .foregroundColor: UIColor.red,
+        .font: UIFont.systemFont(ofSize: 17, weight: .regular)]
 }
