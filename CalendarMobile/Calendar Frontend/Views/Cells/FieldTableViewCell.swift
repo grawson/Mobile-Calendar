@@ -63,7 +63,7 @@ class FieldTableViewCell: UITableViewCell {
         let metrics = [ Layout.margin ]
         let formats = [
             "H:|-(m0)-[v0]-(m0)-|",
-            "V:|-(m0)-[v0]-(m0)-|"
+            "V:|[v0]|"
         ]
         
         c = createConstraints(withFormats: formats, metrics: metrics, views: views)

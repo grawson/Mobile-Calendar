@@ -20,9 +20,10 @@ class MonthCollectionViewCell: UICollectionViewCell {
     var date: Date?                                     // Can be any day in the month
     var delegate: MonthCollectionViewCellDelegate?
     var eventsMapping: EventsMapping?
+    var selectedDate: Date?                             // Date to circle in the calendar
     
     fileprivate var c = [NSLayoutConstraint]()
-    fileprivate var weekContainingToday: WeekView?      // week containing selected day
+    fileprivate var weekContainingSelectedDay: WeekView?      // week containing selected day
     
     fileprivate var weeksStack: UIStackView = {
         let x = UIStackView()
@@ -79,19 +80,26 @@ class MonthCollectionViewCell: UICollectionViewCell {
         addConstraints(c)
     }
     
-    // Update the month view
+    // Update the month view. Redraws day labels, draws event overlays if needed, highlights today, and highlights selected day
     public func update() {
         guard let date = date else { return }
+        
+        // reset month
+        weekContainingSelectedDay = nil
+        for r in 0..<weeksStack.arrangedSubviews.count {
+            let weekView = weeksStack.arrangedSubviews[r] as! WeekView
+            weekView.todayIndex = nil
+            weekView.selectedIndex = nil
+        }
         
         let startCurr = date.startOfMonth()
         let endCurr = date.endOfMonth()
         guard let endPrev = Calendar.current.date(byAdding: DateComponents(month: -1, day: 0), to: startCurr)?.endOfMonth() else { return }
-
         let firstWeekdayCurr = Calendar.current.dateComponents([.weekday], from: startCurr).weekday!
         let lastWeekdayCurr = Calendar.current.dateComponents([.weekday], from: endCurr).weekday!
         let endPrevComponents = Calendar.current.dateComponents([.day, .year, .month], from: endPrev)
         
-        // Check if today is in this month
+        // variables to check if today is in this month
         let currComp = Calendar.current.dateComponents([.year, .month], from: date)
         let todayComp = Calendar.current.dateComponents([.year, .month, .day], from: Date())
         let todayDay = todayComp.year! == currComp.year! && todayComp.month! == currComp.month! ? todayComp.day! : nil
@@ -132,8 +140,13 @@ class MonthCollectionViewCell: UICollectionViewCell {
             weekView.days = days
             weekView.currentMonth = currentMonth
             
+            // get components for selecte date
+            var selectedComp: DateComponents?
+            if let selectedDate = selectedDate {
+                selectedComp = Calendar.current.dateComponents([.year, .month, .day], from: selectedDate)
+            }
+            
             // Update event markers on each day
-            var foundToday = false
             if let mapping = eventsMapping {
                 var eventOnDays = Array(repeating: false, count: 7)
                 for i in 0..<7 {
@@ -141,33 +154,35 @@ class MonthCollectionViewCell: UICollectionViewCell {
                     // check for and highlight today
                     if let todayDay = todayDay, todayDay == weekView.days![i] {
                         weekView.todayIndex = i
-                        foundToday = true
                     }
                     
+                    // Get the date components for the date
                     var currDateComp = Calendar.current.dateComponents([.year, .month], from: date)
                     currDateComp.day = days[i]
-                    
                     if r == 0 && !currentMonth[i] { // prev month
                         currDateComp.month! -= 1
                     } else if r == weeksStack.arrangedSubviews.count-1 && !currentMonth[i] {    // next month
                         currDateComp.month! += 1
                     }
+                    
+                    // update tvents overlay for day if needed
                     eventOnDays[i] = mapping.countEventsFor(Calendar.current.date(from: currDateComp)!) > 0
+                    
+                    // check if should select the day
+                    if let selectedComp = selectedComp, selectedComp == currDateComp {
+                        weekView.selectedIndex = i
+                        weekContainingSelectedDay = weekView
+                    }
                 }
                 weekView.eventOnDay = eventOnDays
-            }
-            
-            // clear today highlighting if not found
-            if !foundToday {
-                weekView.todayIndex = nil
             }
         }
     }
     
-    public func clearToday() {
-        weekContainingToday?.today = nil
+    public func clearSelectedDay() {
+        weekContainingSelectedDay?.selectedIndex = nil
+        selectedDate = nil
     }
-    
 }
 
 // MARK:  Week view delegate
@@ -176,12 +191,14 @@ class MonthCollectionViewCell: UICollectionViewCell {
 
 extension MonthCollectionViewCell: WeekViewDelegate {
     func didSelectDay(_ weekView: WeekView, index: Int) {
+        guard !(weekView.tag == weekContainingSelectedDay?.tag && weekContainingSelectedDay?.selectedIndex == index) else { return }    // guards against tapping same button again
         
-        // reset today
-        weekContainingToday?.today = nil
-        weekContainingToday = weekView
-        weekView.today = index
+        // reset selected day
+        weekContainingSelectedDay?.selectedIndex = nil
+        weekContainingSelectedDay = weekView
+        weekContainingSelectedDay?.selectedIndex = index
         
+        // calculate date for selected day
         var dateComp = Calendar.current.dateComponents([.year, .month, .day], from: self.date!)
         dateComp.day! = weekView.days![index]
         if weekView.tag == 0 && !(weekView.currentMonth?[index] ?? true) {  // prev month
@@ -189,6 +206,8 @@ extension MonthCollectionViewCell: WeekViewDelegate {
         } else if weekView.tag == weeksStack.arrangedSubviews.count-1 && !(weekView.currentMonth?[index] ?? true) {    // next month
             dateComp.month! += 1
         }
-        delegate?.didSelect(date: Calendar.current.date(from: dateComp)!)
+        
+        selectedDate = Calendar.current.date(from: dateComp)!
+        delegate?.didSelect(date: selectedDate!)
     }
 }

@@ -29,6 +29,7 @@ class MainViewController: UIViewController {
     fileprivate var selectedDate: Date? { didSet { reloadTable() } }    // date selected (circled in calendar)
     
     fileprivate var todayIndex = Const.loadingBatchSize      // index for today in the months array
+    fileprivate var selectedDateIndex: Int?                  // row for cell containing the selected date
     fileprivate var initialScroll = false                    // flag true if have scrolled to this month on load
     fileprivate var indexOfCellBeforeDragging = 0            // Used for calculating cell snapping
     
@@ -161,7 +162,7 @@ class MainViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+
         if let index = eventsTableView.indexPathForSelectedRow {
             eventsTableView.deselectRow(at: index, animated: true)
         }
@@ -181,7 +182,7 @@ class MainViewController: UIViewController {
         // load events
         eventsMapping.loadEvents(start: months.first!, end: months.last!) { [weak self] in
             DispatchQueue.main.async {
-                self?.monthCollectionView.reloadData()
+                self?.reloadCollectionView()
                 self?.reloadTable()
             }
         }
@@ -260,6 +261,11 @@ class MainViewController: UIViewController {
         eventsTableView.reloadData()
     }
     
+    // reload the collection view
+    fileprivate func reloadCollectionView() {
+        monthCollectionView.reloadData()
+    }
+    
     // show event details form
     fileprivate func showEventDetails(_ forEvent: Event?) {
         let vc = EventDetailsViewController()
@@ -301,9 +307,9 @@ extension MainViewController: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Const.cellID, for: indexPath) as! MonthCollectionViewCell
         cell.eventsMapping = eventsMapping  
         cell.date = months[indexPath.row]
-        cell.update()
         cell.delegate = self
-        
+        cell.selectedDate = indexPath.row == selectedDateIndex ? selectedDate : nil
+        cell.update()
         return cell
     }
 }
@@ -350,7 +356,10 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
                 let referenceDate = updateBeginning ? months.first! : months.last!
                 let toAdd = Calendar.current.date(byAdding: DateComponents(month: updateBeginning ? -1 : 1, day: 0), to: referenceDate)!.startOfMonth()
                 updateBeginning ? months.insert(toAdd, at: 0) : months.append(toAdd)
-                if updateBeginning { todayIndex += 1 }
+                if updateBeginning {
+                    todayIndex += 1
+                    if selectedDateIndex != nil { selectedDateIndex! += 1 }
+                }
             }
             
             // Load events for new months
@@ -358,7 +367,7 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
             let lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1) - (Const.loadingBatchSize-1)].endOfMonth()
             eventsMapping.loadEvents(start: firstMonth, end: lastMonth) {
                 DispatchQueue.main.async { [weak self] in
-                    self?.monthCollectionView.reloadData()    // TODO: Innefficient to reload all cells
+                    self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
                     if updateBeginning {
                         self?.monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
                     }
@@ -368,9 +377,19 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        // clear today selection if vc is visible
-        guard self.isViewLoaded && (self.view.window != nil) else { return }
-        (cell as! MonthCollectionViewCell).clearToday()
+        let cell = cell as! MonthCollectionViewCell
+        guard
+            let oldDate = cell.date,
+            let newDate = displayedDate
+        else { return }
+
+        // check this is not the currently displayed cell
+        let oldComp = Calendar.current.dateComponents([.year, .month], from: oldDate)
+        let newComp = Calendar.current.dateComponents([.year, .month], from: newDate)
+        guard oldComp != newComp else { return }
+
+        // clear selected day
+        cell.clearSelectedDay()
         selectedDate = nil
     }
 }
@@ -385,8 +404,8 @@ extension MainViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: Const.eventCell, for: indexPath as IndexPath) as! EventTableViewCell
-        // selection color
         
+        // selection color
         let selection = UIView()
         selection.backgroundColor = Colors.blue4
         cell.selectedBackgroundView = selection
@@ -429,6 +448,10 @@ extension MainViewController: UITableViewDelegate {
 extension MainViewController: MonthCollectionViewCellDelegate {
     func didSelect(date: Date) {
        selectedDate = date
+        
+        // store index for selected cell
+        let paths = monthCollectionView.indexPathsForVisibleItems
+        selectedDateIndex = paths.first?.row
     }
 }
 

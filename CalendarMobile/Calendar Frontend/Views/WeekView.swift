@@ -24,11 +24,11 @@ class WeekView: UIView {
     }
     
     var delegate: WeekViewDelegate?
-    var today: Int?             { didSet { updateToday(oldValue: oldValue) } }      // Index of today in the days stack
-    var currentMonth: [Bool]?   { didSet { updateDays() } }                         // Flags indicating the day is in the current month
-    var days: [Int]?            { didSet { updateDays() } }                         // Day numbers for the week
-    var eventOnDay: [Bool]?     { didSet { updateEventOnDays() } }                  // Marker if there is an event in a day
-    var todayIndex: Int?        { didSet { updateDays() } }                         // index of today in the days array
+    var selectedIndex: Int?     { didSet { updateSelectedDay(oldValue: oldValue) } } // Index of selected day in the days stack
+    var currentMonth: [Bool]?   { didSet { updateDays() } }                          // Flags indicating the day is in the current month
+    var days: [Int]?            { didSet { updateDays() } }                          // Day numbers for the week
+    var eventOnDay: [Bool]?     { didSet { updateEventOnDays() } }                   // Marker if there is an event in a day
+    var todayIndex: Int?        { didSet { updateDays() } }                          // index of today in the days array
     
     fileprivate var c = [NSLayoutConstraint]()
     fileprivate var eventMarkers = [UIView]()
@@ -50,7 +50,7 @@ class WeekView: UIView {
         return x
     }()
     
-    fileprivate var todayOverlay: UIView = {
+    fileprivate var selectedDayOverlay: UIView = {
         let x = UIView()
         x.backgroundColor = Colors.titleText
         
@@ -81,8 +81,8 @@ class WeekView: UIView {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        if todayOverlay.superview != nil {
-            todayOverlay.layer.cornerRadius = todayOverlay.frame.height / 2
+        if selectedDayOverlay.superview != nil {
+            selectedDayOverlay.layer.cornerRadius = selectedDayOverlay.frame.height / 2
         }
         
         for marker in eventMarkers {
@@ -141,14 +141,14 @@ class WeekView: UIView {
             
             button.set(title: "\(days[i])", states: [.normal, .highlighted], forStyle: attr)
             button.set(title: "\(days[i])", states: [.selected], forStyle: LabelStyle.darkRegular)
-            if (today == i) { button.isSelected = true }
+            if (selectedIndex == i) { button.isSelected = true }
         }
     }
     
-    fileprivate func updateToday(oldValue: Int?) {
-        // Clear today overlay
-        if todayOverlay.superview != nil {
-            todayOverlay.removeFromSuperview()
+    fileprivate func updateSelectedDay(oldValue: Int?) {
+        // Clear selected overlay
+        if selectedDayOverlay.superview != nil {
+            selectedDayOverlay.removeFromSuperview()
             
             if let oldValue = oldValue {
                 let oldButton = daysStack.arrangedSubviews[oldValue] as! UIButton
@@ -156,32 +156,32 @@ class WeekView: UIView {
             }
         }
         
-        guard let today = today else { return }
+        guard let selectedIndex = selectedIndex else { return }
         
         // insert above event markers
-        insertSubview(todayOverlay, at: eventMarkers.count)
+        insertSubview(selectedDayOverlay, at: eventMarkers.count)
         
         // Constraints
-        let anchor = daysStack.arrangedSubviews[today]
-        todayOverlay.translatesAutoresizingMaskIntoConstraints = false
-        todayOverlay.centerXAnchor.constraint(equalTo: anchor.centerXAnchor).isActive = true
-        todayOverlay.centerYAnchor.constraint(equalTo: anchor.centerYAnchor).isActive = true
-        todayOverlay.heightAnchor.constraint(equalToConstant: Const.todayOverlayHeight).isActive = true
-        todayOverlay.widthAnchor.constraint(equalToConstant: Const.todayOverlayHeight).isActive = true
+        let anchor = daysStack.arrangedSubviews[selectedIndex]
+        selectedDayOverlay.translatesAutoresizingMaskIntoConstraints = false
+        selectedDayOverlay.centerXAnchor.constraint(equalTo: anchor.centerXAnchor).isActive = true
+        selectedDayOverlay.centerYAnchor.constraint(equalTo: anchor.centerYAnchor).isActive = true
+        selectedDayOverlay.heightAnchor.constraint(equalToConstant: Const.todayOverlayHeight).isActive = true
+        selectedDayOverlay.widthAnchor.constraint(equalToConstant: Const.todayOverlayHeight).isActive = true
         setNeedsLayout()
         layoutIfNeeded()
         
         // Animate today overlay in
-        todayOverlay.transform = CGAffineTransform(scaleX: 0, y: 0)
+        selectedDayOverlay.transform = CGAffineTransform(scaleX: 0, y: 0)
         UIView.animate(withDuration: 0.2, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 10, options: .curveEaseIn, animations: { [weak self] in
-            self?.todayOverlay.transform = CGAffineTransform(scaleX: 1, y: 1)
+            self?.selectedDayOverlay.transform = CGAffineTransform(scaleX: 1, y: 1)
         }, completion: nil)
 
         // Update todays color
         UIView.animate(withDuration: 0.17, animations: {
         }) { [weak self] (completed) in
             guard completed else { return }
-            (self?.daysStack.arrangedSubviews[today] as! UIButton).isSelected = true
+            (self?.daysStack.arrangedSubviews[selectedIndex] as! UIButton).isSelected = true
         }
     }
     
