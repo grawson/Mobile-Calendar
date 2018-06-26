@@ -80,12 +80,12 @@ class EventsMapping {
     }
     
     // Load event sbetween two dates inclusive
-    public func loadEvents(start: Date, end: Date, completion: (() -> Void)?) {
+    public func loadEvents(start: Date, end: Date, completion: ((_ success: Bool) -> Void)?) {
         EventsManager.shared.getEvents(start: start, end: end) { [weak self] (events) in
-            events.forEach { self?.add($0) }
+            events?.forEach { self?.add($0) }
             
             if let completion = completion {
-                completion()
+                completion(events != nil)
             }
         }
     }

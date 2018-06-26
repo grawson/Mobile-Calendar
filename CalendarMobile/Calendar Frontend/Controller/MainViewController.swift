@@ -171,6 +171,16 @@ class MainViewController: UIViewController {
     // MARK:  Func
     // ********************************************************************************************
     
+    fileprivate func presentAlertWith(_ msg: String) {
+        let alert = UIAlertController(title: "Uh Oh", message: msg, preferredStyle: .alert)
+        let ok = UIAlertAction(title: "OK", style: .default, handler: nil)
+        alert.addAction(ok)
+        DispatchQueue.main.async { [weak self] in
+            UIApplication.shared.isNetworkActivityIndicatorVisible = false
+            self?.present(alert, animated: true, completion: nil)
+        }
+    }
+    
     // Initialize the initial months in the collection view
     fileprivate func initMonths() {
         let offset = Const.loadingBatchSize
@@ -180,8 +190,15 @@ class MainViewController: UIViewController {
         }
         
         // load events
-        eventsMapping.loadEvents(start: months.first!, end: months.last!) { [weak self] in
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+        eventsMapping.loadEvents(start: months.first!, end: months.last!) { [weak self] (success) in
+            guard success else {
+                self?.presentAlertWith("Failed to load events.")
+                return
+            }
+            
             DispatchQueue.main.async {
+                UIApplication.shared.isNetworkActivityIndicatorVisible = false
                 self?.reloadCollectionView()
                 self?.reloadTable()
             }
@@ -362,15 +379,25 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
                 }
             }
             
+            // reload view
+            if updateBeginning {
+                reloadCollectionView()    // TODO: Innefficient to reload all cells
+                monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
+            }
+            
             // Load events for new months
             let firstMonth = months[updateBeginning ? 0 : months.count-1]
             let lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1) - (Const.loadingBatchSize-1)].endOfMonth()
-            eventsMapping.loadEvents(start: firstMonth, end: lastMonth) {
-                DispatchQueue.main.async { [weak self] in
+            UIApplication.shared.isNetworkActivityIndicatorVisible = true
+            eventsMapping.loadEvents(start: firstMonth, end: lastMonth) { [weak self] (success) in
+                guard success else {
+                    self?.presentAlertWith("Failed to load events.")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
                     self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
-                    if updateBeginning {
-                        self?.monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
-                    }
                 }
             }
         }

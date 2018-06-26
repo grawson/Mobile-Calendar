@@ -28,12 +28,12 @@ class EventsManager {
     // ********************************************************************************************
     
     // Load all events
-    public func getAllEvents(completion: @escaping (_ events: [Event]) -> Void ) {
+    public func getAllEvents(completion: @escaping (_ events: [Event]?) -> Void ) {
         getAllEvents(params: nil, completion: completion)
     }
     
     // Load all events between given dates
-    public func getEvents(start: Date, end: Date, completion: @escaping (_ events: [Event]) -> Void ) {
+    public func getEvents(start: Date, end: Date, completion: @escaping (_ events: [Event]?) -> Void ) {
         let params: Parameters = [
             "start_date": formatter.string(from: start),
             "end_date": formatter.string(from: end)
@@ -104,21 +104,22 @@ class EventsManager {
     }
     
     // Generic events loader
-    fileprivate func getAllEvents(params: Parameters?, completion: @escaping (_ events: [Event]) -> Void ) {
+    fileprivate func getAllEvents(params: Parameters?, completion: @escaping (_ events: [Event]?) -> Void ) {
         
         Alamofire.request("http://\(Config.domain)/events", parameters: params).responseJSON { response in
-            var events = [Event]()
+            var events: [Event]?
             
             guard let json = response.result.value else {
                 completion(events)
                 return
             }
             
+            events = []
             let swiftyJSON = JSON(json)
             
             for eventJSON in swiftyJSON.arrayValue {
                 let event = Event(json: eventJSON)
-                events.append(event)
+                events?.append(event)
             }
             completion(events)
         }
