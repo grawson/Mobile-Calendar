@@ -158,6 +158,8 @@ class EventDetailsViewController: UIViewController {
             return
         }
         
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+        
         // update event if editing
         if let editEvent = editEvent {
             let oldEvent = editEvent.copy() as! Event
@@ -175,6 +177,7 @@ class EventDetailsViewController: UIViewController {
                 
                 DispatchQueue.main.async {
                     self?.saveButton.isEnabled = true
+                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
                     self?.delegate?.didEdit(oldEvent, newEvent: editEvent)
                     self?.close()
                 }
@@ -192,6 +195,7 @@ class EventDetailsViewController: UIViewController {
                 
                 DispatchQueue.main.async {
                     self?.saveButton.isEnabled = true
+                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
                     self?.delegate?.didCreate(newEvent)
                     self?.close()
                 }
@@ -207,6 +211,7 @@ class EventDetailsViewController: UIViewController {
         
         DispatchQueue.main.async { [weak self] in
             self?.saveButton.isEnabled = true
+            UIApplication.shared.isNetworkActivityIndicatorVisible = false
             self?.present(alert, animated: true, completion: nil)
         }
     }
@@ -225,8 +230,8 @@ class EventDetailsViewController: UIViewController {
     
     @objc func deleteTapped(_ sender: UIButton) {
         
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
         let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete this event?", preferredStyle: .alert)
-        
         let yes = UIAlertAction(title: "Yes", style: .destructive) { [weak self] (action) in
             guard let sSelf = self else { return }
            
@@ -237,6 +242,7 @@ class EventDetailsViewController: UIViewController {
                 }
                 
                 DispatchQueue.main.async {
+                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
                     self?.delegate?.didDelete(sSelf.editEvent!)
                     self?.close()
                 }
