@@ -9,7 +9,7 @@
 import UIKit
 
 protocol WeekViewDelegate {
-    func didSelectDay(_ weekView: WeekView, index: Int)
+    func didSelectDay(_ weekView: WeekView, date: Date, selectedIndex: Int)
 }
 
 class WeekView: UIView {
@@ -27,6 +27,7 @@ class WeekView: UIView {
     var selectedIndex: Int?     { didSet { updateSelectedDay(oldValue: oldValue) } } // Index of selected day in the days stack
     var currentMonth: [Bool]?   { didSet { updateDays() } }                          // Flags indicating the day is in the current month
     var days: [Int]?            { didSet { updateDays() } }                          // Day numbers for the week
+    var dates: [Date]?                                                               // The date for each day in the week
     var eventOnDay: [Bool]?     { didSet { updateEventOnDays() } }                   // Marker if there is an event in a day
     var todayIndex: Int?        { didSet { updateDays() } }                          // index of today in the days array
     
@@ -220,7 +221,12 @@ class WeekView: UIView {
     // ********************************************************************************************
     
     @objc func dayTapped(_ sender: UIButton) {
-        delegate?.didSelectDay(self, index: sender.tag)
+        guard
+            let dates = dates,
+            sender.tag != selectedIndex     // guards against tapping same button again
+        else { return }
+        
+        delegate?.didSelectDay(self, date: dates[sender.tag], selectedIndex: sender.tag)
     }
     
 }
