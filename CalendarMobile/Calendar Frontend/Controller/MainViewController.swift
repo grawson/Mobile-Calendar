@@ -60,7 +60,8 @@ class MainViewController: UIViewController {
     fileprivate lazy var todayButton: UIButton = {
         let x = UIButton()
         x.addTarget(self, action: #selector(todayClicked(_:)), for: .touchUpInside)
-        x.set(title: "Today", states: [.normal], forStyle: LabelStyle.largeButton)
+        x.setImage(UIImage(named: "today")?.withRenderingMode(.alwaysTemplate), for: .normal)
+        x.tintColor = Colors.tint
         return x
     }()
     
@@ -267,7 +268,7 @@ class MainViewController: UIViewController {
             "H:|[v3]|",
             "H:|-(m3)-[v5]-(m3)-|",
             "H:|-[v6]-|",
-            "H:[v8]-(m0)-[v7]-(m0)-[v4(m1)]-|",
+            "H:[v8]-(m3)-[v7]-(m3)-[v4(m1)]-|",
             "V:[v4(m1)]"
         ]
         
@@ -277,10 +278,9 @@ class MainViewController: UIViewController {
         
         constraints += [
             yearLabel.lastBaselineAnchor.constraint(equalTo: monthLabel.lastBaselineAnchor),
-            yearLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -Layout.margin),
             emptyTableLabel.centerXAnchor.constraint(equalTo: eventsTableView.centerXAnchor),
             emptyTableLabel.centerYAnchor.constraint(equalTo: eventsTableView.centerYAnchor),
-            yearLabel.trailingAnchor.constraint(lessThanOrEqualTo: addEventButton.leadingAnchor, constant: Layout.margin),
+//            yearLabel.trailingAnchor.constraint(lessThanOrEqualTo: refreshButton.leadingAnchor, constant: -Layout.margin),
             addEventButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor),
             todayButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor),
             refreshButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor)

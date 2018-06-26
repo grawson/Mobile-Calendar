@@ -67,7 +67,7 @@ class EventTableViewCell: UITableViewCell {
         let metrics = [ Layout.margin]
         let formats = [
             "H:|-(m0)-[v1]-[v3]-[v2]",
-            "H:|-(m0)-[v0]-(m0)-|",
+            "H:|-(m0)-[v0]",
             "V:|-(m0)-[v0]-[v1]-(m0)-|",
             "V:[v2]-(m0)-|"
         ]
@@ -75,7 +75,8 @@ class EventTableViewCell: UITableViewCell {
         c = createConstraints(withFormats: formats, metrics: metrics, views: views)
         
         c += [
-            endLabel.trailingAnchor.constraintLessThanOrEqualToSystemSpacingAfter(trailingAnchor, multiplier: -Layout.margin),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -Layout.margin),
+            endLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -Layout.margin),
             separator.centerYAnchor.constraint(equalTo: startLabel.centerYAnchor)
         ]
         addConstraints(c)
