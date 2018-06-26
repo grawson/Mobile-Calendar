@@ -64,6 +64,14 @@ class MainViewController: UIViewController {
         return x
     }()
     
+    fileprivate lazy var refreshButton: UIButton = {
+        let x = UIButton()
+        x.addTarget(self, action: #selector(refreshClicked(_:)), for: .touchUpInside)
+        x.setImage(UIImage(named: "refresh")?.withRenderingMode(.alwaysTemplate), for: .normal)
+        x.tintColor = Colors.tint
+        return x
+    }()
+    
     fileprivate var separator: UIView = {
         let x = UIView()
         x.backgroundColor = Colors.separator
@@ -171,6 +179,25 @@ class MainViewController: UIViewController {
     // MARK:  Func
     // ********************************************************************************************
     
+    // refresh the events
+    fileprivate func refresh() {
+        guard let first = months.first, let last = months.last else { return }
+        eventsMapping.clear()
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+        eventsMapping.loadEvents(start: first, end: last) { [weak self] (success) in
+            guard success else {
+                self?.presentAlertWith("Failed to load events.")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
+                self?.reloadTable()
+            }
+        }
+    }
+    
     fileprivate func presentAlertWith(_ msg: String) {
         let alert = UIAlertController(title: "Uh Oh", message: msg, preferredStyle: .alert)
         let ok = UIAlertAction(title: "OK", style: .default, handler: nil)
@@ -191,7 +218,8 @@ class MainViewController: UIViewController {
         
         // load events
         UIApplication.shared.isNetworkActivityIndicatorVisible = true
-        eventsMapping.loadEvents(start: months.first!, end: months.last!) { [weak self] (success) in
+        let last = Calendar.current.date(byAdding: DateComponents(day: 1), to: months.last!)!
+        eventsMapping.loadEvents(start: months.first!, end: last) { [weak self] (success) in
             guard success else {
                 self?.presentAlertWith("Failed to load events.")
                 return
@@ -213,15 +241,12 @@ class MainViewController: UIViewController {
         eventsTableView.dataSource = self
         eventsTableView.delegate = self
         
-        view.addSubview(monthCollectionView)
-        view.addSubview(monthLabel)
-        view.addSubview(yearLabel)
-        view.addSubview(eventsTableView)
-        view.addSubview(emptyTableLabel)
-        view.addSubview(addEventButton)
-        view.addSubview(dayLabels)
-        view.addSubview(separator)
-        view.addSubview(todayButton)
+        let views = [
+            monthCollectionView, monthLabel, yearLabel, eventsTableView, emptyTableLabel, addEventButton, dayLabels,
+            separator, todayButton, refreshButton
+        ]
+        
+        views.forEach { view.addSubview($0) }
     }
     
     fileprivate func updateLayout() {
@@ -231,7 +256,7 @@ class MainViewController: UIViewController {
         let views = [
             monthCollectionView, monthLabel, yearLabel,     // 0-2
             eventsTableView, addEventButton, dayLabels,     // 3-5
-            separator, todayButton   // 6-8
+            separator, todayButton, refreshButton           // 6-8
         ]
         
         let metrics = [Layout.margin, 20, Layout.margin*2, Layout.margin*1.5]
@@ -242,7 +267,7 @@ class MainViewController: UIViewController {
             "H:|[v3]|",
             "H:|-(m3)-[v5]-(m3)-|",
             "H:|-[v6]-|",
-            "H:[v7]-(m0)-[v4(m1)]-|",
+            "H:[v8]-(m0)-[v7]-(m0)-[v4(m1)]-|",
             "V:[v4(m1)]"
         ]
         
@@ -257,7 +282,8 @@ class MainViewController: UIViewController {
             emptyTableLabel.centerYAnchor.constraint(equalTo: eventsTableView.centerYAnchor),
             yearLabel.trailingAnchor.constraint(lessThanOrEqualTo: addEventButton.leadingAnchor, constant: Layout.margin),
             addEventButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor),
-            todayButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor)
+            todayButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor),
+            refreshButton.centerYAnchor.constraint(equalTo: yearLabel.centerYAnchor)
         ]
         
         view.addConstraints(constraints)
@@ -295,6 +321,10 @@ class MainViewController: UIViewController {
     
     // MARK:  Event listener
     // ********************************************************************************************
+    
+    @objc fileprivate func refreshClicked(_ sender: UIButton) {
+        refresh()
+    }
     
     @objc fileprivate func addEventClicked(_ sender: UIButton) {
         showEventDetails(nil)
@@ -386,8 +416,10 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
             }
             
             // Load events for new months
-            let firstMonth = months[updateBeginning ? 0 : months.count-1]
-            let lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1) - (Const.loadingBatchSize-1)].endOfMonth()
+            let firstMonth = months[updateBeginning ? 0 : months.count-2  - (Const.loadingBatchSize-1)].startOfMonth()
+            var lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1)].endOfMonth()
+            lastMonth = Calendar.current.date(byAdding: DateComponents(day: 1), to: lastMonth)!
+    
             UIApplication.shared.isNetworkActivityIndicatorVisible = true
             eventsMapping.loadEvents(start: firstMonth, end: lastMonth) { [weak self] (success) in
                 guard success else {
@@ -398,6 +430,7 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
                 DispatchQueue.main.async {
                     UIApplication.shared.isNetworkActivityIndicatorVisible = false
                     self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
+                    self?.reloadTable()
                 }
             }
         }

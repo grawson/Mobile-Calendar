@@ -17,8 +17,8 @@ class EventsMapping {
         static let mappingFmt = "yyyy-MM-dd"
     }
     
-    fileprivate var eventsMapping = [String: Int]()           // Maps date string to index of events in events array
-    fileprivate var events = [[Event]]()                      // rows correspond to a single date
+    public var eventsMapping = [String: Int]()           // Maps date string to index of events in events array
+    public var events = [[Event]]()                      // rows correspond to a single date
     fileprivate let formatter = DateFormatter()
     
     
@@ -79,7 +79,7 @@ class EventsMapping {
         return events[dateIndex][r]
     }
     
-    // Load event sbetween two dates inclusive
+    // Load events between two dates inclusive
     public func loadEvents(start: Date, end: Date, completion: ((_ success: Bool) -> Void)?) {
         EventsManager.shared.getEvents(start: start, end: end) { [weak self] (events) in
             events?.forEach { self?.add($0) }
@@ -88,6 +88,11 @@ class EventsMapping {
                 completion(events != nil)
             }
         }
+    }
+    
+    public func clear() {
+        eventsMapping = [String: Int]()
+        events = []
     }
     
     
