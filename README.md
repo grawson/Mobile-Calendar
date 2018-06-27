@@ -2,6 +2,8 @@
 
 Thank you for considering me for this fellowship position! I hope you enjoy the app :)
 
+Check out the demo for a quick overview!
+
 # Features
 
 * Add, delete, and edit events
