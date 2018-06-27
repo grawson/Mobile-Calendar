@@ -57,4 +57,7 @@ class DBConnector:
 
     # Get row headers
     def headers(self):
+        if self.cursor.description is None:
+            return []
+            
         return [x[0] for x in self.cursor.description]
