@@ -49,10 +49,8 @@ class EventTableViewCell: UITableViewCell {
     fileprivate func initViews() {
         backgroundColor = UIColor.clear
         
-        addSubview(titleLabel)
-        addSubview(startLabel)
-        addSubview(endLabel)
-        addSubview(separator)
+        let views = [titleLabel, startLabel, endLabel, separator]
+        views.forEach { addSubview($0) }
     }
     
     fileprivate func updateLayout() {
@@ -81,5 +79,4 @@ class EventTableViewCell: UITableViewCell {
         ]
         addConstraints(c)
     }
-
 }

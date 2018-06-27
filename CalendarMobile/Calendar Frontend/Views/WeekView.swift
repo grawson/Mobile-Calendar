@@ -128,7 +128,7 @@ class WeekView: UIView {
             let currentMonth = currentMonth,
             days.count == currentMonth.count,
             days.count == daysStack.arrangedSubviews.count
-            else { return }
+        else { return }
         
         for i in 0...daysStack.arrangedSubviews.count-1 {
             let button = daysStack.arrangedSubviews[i] as! UIButton

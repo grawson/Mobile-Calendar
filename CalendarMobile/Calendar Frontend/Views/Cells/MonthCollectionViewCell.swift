@@ -19,11 +19,11 @@ class MonthCollectionViewCell: UICollectionViewCell {
     
     var date: Date?                                     // Can be any day in the month
     var delegate: MonthCollectionViewCellDelegate?
-    var eventsMapping: EventsMapping?
+    var eventsMapping: EventsMapping?                   // Used to check for events on a given date
     var selectedDate: Date?                             // Date to circle in the calendar
     
     fileprivate var c = [NSLayoutConstraint]()
-    fileprivate var weekContainingSelectedDay: WeekView?      // week containing selected day
+    fileprivate var weekContainingSelectedDay: WeekView?      // week containing selected day (white circle)
     
     fileprivate var weeksStack: UIStackView = {
         let x = UIStackView()
@@ -54,7 +54,7 @@ class MonthCollectionViewCell: UICollectionViewCell {
         for view in weeksStack.arrangedSubviews {
             (view as! WeekView).delegate = self
         }
-        
+
         contentView.addSubview(weeksStack)
     }
     
@@ -101,14 +101,14 @@ class MonthCollectionViewCell: UICollectionViewCell {
         let todayComp = Calendar.current.dateComponents([.day, .month, .year], from: Date())
         let selectedComp = selectedDate != nil ? Calendar.current.dateComponents([.year, .month, .day], from: selectedDate!) : nil  // the day to select
     
-        for r in 0..<weeksStack.arrangedSubviews.count {
+        for r in 0..<weeksStack.arrangedSubviews.count {    // for each week
             let weekView = weeksStack.arrangedSubviews[r] as! WeekView
             var days = Array(repeating: 0, count: 7)
             var eventOnDays = Array(repeating: false, count: 7)
             var currentMonth = Array(repeating: false, count: 7)
             var dates = [Date]()
             
-            for c in 0..<7 {
+            for c in 0..<7 {    // for each day in the week
                 let currComp = Calendar.current.dateComponents([.day, .month, .year], from: currDate)
                 days[c] = currComp.day!
                 currentMonth[c] = currComp.month! == startOfMonthComp.month!

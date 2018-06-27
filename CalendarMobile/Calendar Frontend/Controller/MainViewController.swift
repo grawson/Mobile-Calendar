@@ -193,12 +193,13 @@ class MainViewController: UIViewController {
             
             DispatchQueue.main.async {
                 UIApplication.shared.isNetworkActivityIndicatorVisible = false
-                self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
+                self?.reloadCollectionView()
                 self?.reloadTable()
             }
         }
     }
     
+    // Present an error message
     fileprivate func presentAlertWith(_ msg: String) {
         let alert = UIAlertController(title: "Uh Oh", message: msg, preferredStyle: .alert)
         let ok = UIAlertAction(title: "OK", style: .default, handler: nil)
@@ -395,43 +396,41 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
         let indexOfMajorCell = self.indexOfMajorCell()                                      // Currently displayed cell index
         let monthsNeedUpdate = indexOfMajorCell <= 2 || indexOfMajorCell >= months.count-3  // Need to load new months
         let updateBeginning = monthsNeedUpdate && indexOfMajorCell <= 2                     // update beginning of months array
+        guard monthsNeedUpdate else { return }
 
-        if monthsNeedUpdate {
-
-            // Load batch of months
-            for _ in 0..<Const.loadingBatchSize {
-                let referenceDate = updateBeginning ? months.first! : months.last!
-                let toAdd = Calendar.current.date(byAdding: DateComponents(month: updateBeginning ? -1 : 1, day: 0), to: referenceDate)!.startOfMonth()
-                updateBeginning ? months.insert(toAdd, at: 0) : months.append(toAdd)
-                if updateBeginning {
-                    todayIndex += 1
-                    if selectedDateIndex != nil { selectedDateIndex! += 1 }
-                }
-            }
-            
-            // reload view
+        // Load batch of months
+        for _ in 0..<Const.loadingBatchSize {
+            let referenceDate = updateBeginning ? months.first! : months.last!
+            let toAdd = Calendar.current.date(byAdding: DateComponents(month: updateBeginning ? -1 : 1, day: 0), to: referenceDate)!.startOfMonth()
+            updateBeginning ? months.insert(toAdd, at: 0) : months.append(toAdd)
             if updateBeginning {
-                reloadCollectionView()    // TODO: Innefficient to reload all cells
-                monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
+                todayIndex += 1
+                if selectedDateIndex != nil { selectedDateIndex! += 1 }
+            }
+        }
+        
+        // reload view
+        if updateBeginning {
+            reloadCollectionView()    // Note: Innefficient to reload all cells, but UI acts screwy otherwise
+            monthCollectionView.scrollToItem(at: IndexPath(row:indexOfMajorCell+Const.loadingBatchSize, section: 0), at: .centeredHorizontally, animated: false)
+        }
+        
+        // Load events for new months
+        let firstMonth = months[updateBeginning ? 0 : months.count-2  - (Const.loadingBatchSize-1)].startOfMonth()
+        var lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1)].endOfMonth()
+        lastMonth = Calendar.current.date(byAdding: DateComponents(day: 1), to: lastMonth)!
+
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+        eventsMapping.loadEvents(start: firstMonth, end: lastMonth) { [weak self] (success) in
+            guard success else {
+                self?.presentAlertWith("Failed to load events.")
+                return
             }
             
-            // Load events for new months
-            let firstMonth = months[updateBeginning ? 0 : months.count-2  - (Const.loadingBatchSize-1)].startOfMonth()
-            var lastMonth = months[updateBeginning ? Const.loadingBatchSize-1 : (months.count-1)].endOfMonth()
-            lastMonth = Calendar.current.date(byAdding: DateComponents(day: 1), to: lastMonth)!
-    
-            UIApplication.shared.isNetworkActivityIndicatorVisible = true
-            eventsMapping.loadEvents(start: firstMonth, end: lastMonth) { [weak self] (success) in
-                guard success else {
-                    self?.presentAlertWith("Failed to load events.")
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
-                    self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
-                    self?.reloadTable()
-                }
+            DispatchQueue.main.async {
+                UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                self?.reloadCollectionView()    // TODO: Innefficient to reload all cells
+                self?.reloadTable()
             }
         }
     }
@@ -507,9 +506,9 @@ extension MainViewController: UITableViewDelegate {
 
 extension MainViewController: MonthCollectionViewCellDelegate {
     func didSelect(date: Date) {
-       selectedDate = date
+        selectedDate = date
         
-        // store index for selected cell
+        // store index for selected cell in case view needs to be reloaded
         let paths = monthCollectionView.indexPathsForVisibleItems
         selectedDateIndex = paths.first?.row
     }

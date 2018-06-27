@@ -15,11 +15,8 @@ class FieldTableViewCell: UITableViewCell {
 
     // the current title in the field
     var title: String? {
-        get {
-            return field.text
-        } set {
-            field.text = newValue
-        }
+        get { return field.text }
+        set { field.text = newValue }
     }
     
     fileprivate var c = [NSLayoutConstraint]()

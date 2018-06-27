@@ -1,5 +1,5 @@
 ################################################################
-# Set these values appropriateley to connect to the SQL server #
+# Set these values appropriately to connect to the SQL server #
 ################################################################
 
 CONFIG = {

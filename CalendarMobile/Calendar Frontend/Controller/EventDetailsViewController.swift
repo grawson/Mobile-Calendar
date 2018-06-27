@@ -118,12 +118,14 @@ class EventDetailsViewController: UIViewController {
         dismiss(animated: true, completion: nil)
     }
     
+    // MAkes ure the fields are valid. Present an error if invalid, else submit
     fileprivate func validateForm() {
         var error: String?
         
         saveButton.isEnabled = false
         
         defer {
+            // show error if there is one
             if let error = error {
                 let alert = UIAlertController(title: "Uh Oh", message: error, preferredStyle: .alert)
                 let ok = UIAlertAction(title: "OK", style: .default, handler: nil)

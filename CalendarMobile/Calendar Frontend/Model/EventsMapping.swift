@@ -90,6 +90,7 @@ class EventsMapping {
         }
     }
     
+    // clear data structure
     public func clear() {
         eventsMapping = [String: Int]()
         events = []
