@@ -17,8 +17,8 @@ class EventsMapping {
         static let mappingFmt = "yyyy-MM-dd"
     }
     
-    public var eventsMapping = [String: Int]()           // Maps date string to index of events in events array
-    public var events = [[Event]]()                      // rows correspond to a single date
+    fileprivate var eventsMapping = [String: Int]()           // Maps date string to index of events in events array
+    fileprivate var events = [[Event]]()                      // rows correspond to a single date
     fileprivate let formatter = DateFormatter()
     
     
@@ -33,6 +33,15 @@ class EventsMapping {
             events.append([Event]())
             eventsMapping[key] = events.count-1
         }
+        
+        // don't add duplicates
+        var duplicate = false
+        for storedEvent in events[eventsMapping[key]!] {
+            if storedEvent.id == event.id {
+                duplicate = true
+            }
+        }
+        guard !duplicate else { return }
         events[eventsMapping[key]!].append(event)
     }
     

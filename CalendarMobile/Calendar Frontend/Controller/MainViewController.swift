@@ -540,17 +540,18 @@ extension MainViewController: EventFormDelegate {
     fileprivate func reloadIndexPathsFor(_ event: Event) {
         
         // difference in months between today and event
-        let monthDiff = Calendar.current.dateComponents([.month], from: Date(), to: event.endDate).month!
+        let monthDiff = Calendar.current.dateComponents([.month], from: Date(), to: event.startDate).month!
         let monthIndex = todayIndex + monthDiff
         
         // calculate indices of months
-        var toReload = [IndexPath]()
-        toReload.append(IndexPath(row: monthIndex, section: 0))                                          // month for event
-        if monthIndex-1 >= 0 {              toReload.append(IndexPath(row: monthIndex-1, section: 0)) }  // month earlier
-        if monthIndex+1 < months.count {    toReload.append(IndexPath(row: monthIndex+1, section: 0)) }  // month later
+        var toReload = Set<Int>()
+        toReload.insert(monthIndex.clamped(to: (0...months.count-1)))       // this month
+        toReload.insert((monthIndex-1).clamped(to: (0...months.count-1)))     // month earlier
+        toReload.insert((monthIndex+1).clamped(to: (0...months.count-1)))     // month later
         
         // reload
-        monthCollectionView.reloadItems(at: toReload)
+        let paths = toReload.map { IndexPath(row: $0, section: 0) }
+        monthCollectionView.reloadItems(at: paths)
         reloadTable()
     }
 }
