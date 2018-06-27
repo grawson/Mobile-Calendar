@@ -140,7 +140,7 @@ class EventDetailsViewController: UIViewController {
         let startCell = tableView.cellForRow(at: IndexPath(row: 0, section: 1)) as! DatePickerTableViewCell
         let endCell = tableView.cellForRow(at: IndexPath(row: 1, section: 1)) as! DatePickerTableViewCell
         
-        guard let title = titleCell.title else {
+        guard let title = titleCell.title, title != "" else {
             error = "Must set a title for the event."
             return
         }
