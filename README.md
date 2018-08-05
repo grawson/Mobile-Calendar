@@ -1,6 +1,6 @@
 # Introduction
 
-Thank you for considering me for this fellowship position! I hope you enjoy the app :)
+Full stack iOS calendar app. Frontend built with Swift and backend built with Python/MySQL.
 
 Check out the demo for a quick overview!
 
