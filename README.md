@@ -2,7 +2,7 @@
 
 Full stack iOS calendar app. Frontend built with Swift and backend built with Python/MySQL.
 
-Check out the demo for a quick overview!
+Check out the [demo](https://github.com/grawson/Mobile-Calendar/blob/master/demo.MP4) for a quick overview!
 
 # Features
 
